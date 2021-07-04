@@ -74,7 +74,7 @@ describe("Creating and managing issues", () => {
     cy.get(".controls-menu").find("[data-testid=resolve-button]").click();
     cy.get(".issue-container").find(".tag").first().contains("RESOLVED");
     cy.reload();
-    cy.get(".issue-container").should('not.exist');
+    cy.get(".issue-container").should("not.exist");
   });
 
   it("new issue can be marked as deleted, issue disappears after refresh", () => {
@@ -93,6 +93,50 @@ describe("Creating and managing issues", () => {
     cy.get(".controls-menu").find("[data-testid=delete-button]").click();
     cy.get(".issue-container").find(".tag").first().contains("DELETED");
     cy.reload();
-    cy.get(".issue-container").should('not.exist');
-  })
+    cy.get(".issue-container").should("not.exist");
+  });
+
+  it("private issues can be created, unauthorized users cannot see them", () => {
+    // create a private issue
+    cy.get("[data-testid=new-issue-button]").click();
+    cy.get("#location_name").click();
+    cy.get("#location_name").type("loc1");
+    cy.get("#type_name").click();
+    cy.get("#type_name").type("typ1");
+    cy.get("#details").click();
+    cy.get("#details").type("This is a test issue created by Cypress");
+    cy.get("#private").click();
+    cy.get("[data-testid=new-issue-button]").click();
+
+    // check for private icon
+    cy.get("[data-testid=private-icon]");
+
+    // clear authentication cookies
+    cy.url().as("diaryUrl");
+    cy.get("#side-nav-toggle").click();
+    cy.get("[data-testid=logout-button]").click();
+
+    // visit the diary again
+    cy.get("@diaryUrl").then((url) => {
+      cy.visit(url);
+    });
+
+    // check if the private issue exists
+    cy.get("[data-testid=new-issue-button]").should("not.exist");
+  });
+
+  it("entering the diary passcode allows user to see private issues", () => {
+    // enter diary passcode and check that it exists
+    cy.get("[data-testid=passcode-button]").click();
+
+    // try wrong password
+    cy.get("#passcode").click().type("wrongpassword{enter}");
+    cy.get(".notification-container > div").should("not.be.empty");
+    cy.get("#passcode").click().clear().type("cypress123{enter}");
+    cy.get("[data-testid=passcode-button]").should("not.exist");
+    cy.get("[data-testid=settings-button]");
+    cy.get("[data-testid=diary-back-button]").click();
+    cy.get(".issue-container");
+    cy.get("[data-testid=private-icon]");
+  });
 });
