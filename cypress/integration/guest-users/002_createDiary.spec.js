@@ -1,4 +1,9 @@
 describe("New diary setup - validation", () => {
+  beforeEach(() => {
+    Cypress.Cookies.defaults({
+      preserve: ["session", "session.sig"],
+    });
+  });
   it("diary name cannot be blank", () => {
     cy.visit("/");
     cy.get("[data-testid=setup-button").click();
